@@ -26,25 +26,38 @@ export default function About() {
       words.forEach((w, i) => w.classList.toggle('on', i < lit));
     };
     addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll);
     onScroll();
-    return () => removeEventListener('scroll', onScroll);
+    return () => {
+      removeEventListener('scroll', onScroll);
+      removeEventListener('resize', onScroll);
+    };
   }, []);
 
   // Count-up numbers
   useEffect(() => {
+    const counters = [...statsRef.current.querySelectorAll('[data-count]')];
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      counters.forEach((el) => { el.textContent = el.dataset.count; });
+      return;
+    }
+    const frames = new Map();
     const io = new IntersectionObserver((entries) => entries.forEach((e) => {
       if (!e.isIntersecting) return;
       const el = e.target, end = +el.dataset.count, start = end > 1000 ? 2000 : 0, dur = 1400, t0 = performance.now();
       const step = (t) => {
-        const p = Math.min(1, (t - t0) / dur), k = 1 - Math.pow(1 - p, 3);
+        const p = Math.max(0, Math.min(1, (t - t0) / dur)), k = 1 - Math.pow(1 - p, 3);
         el.textContent = Math.round(start + (end - start) * k);
-        if (p < 1) requestAnimationFrame(step);
+        if (p < 1) frames.set(el, requestAnimationFrame(step));
       };
-      requestAnimationFrame(step);
+      frames.set(el, requestAnimationFrame(step));
       io.unobserve(el);
     }), { threshold: 0.6 });
-    statsRef.current.querySelectorAll('[data-count]').forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    counters.forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      frames.forEach((id) => cancelAnimationFrame(id));
+    };
   }, []);
 
   return (

@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { profile } from '@/data/content';
 import { Chars } from './Split';
+import useYear from './useYear';
 
 // Eased 0 → 100 count with a progress line, then a two-layer curtain wipe
 // (dark panel lifts first, a lime panel chases it) and tells the page it's ready.
 export default function Preloader() {
   const [count, setCount] = useState(0);
   const [phase, setPhase] = useState('in'); // in → done
+  const year = useYear();
 
   useEffect(() => {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -38,7 +40,7 @@ export default function Preloader() {
       <div className="loader__panel loader__panel--dark">
         <div className="loader__top">
           <span className="loader__name"><Chars text={profile.name} /></span>
-          <span className="loader__tag">Portfolio ©{new Date().getFullYear()}</span>
+          <span className="loader__tag">Portfolio ©{year}</span>
         </div>
         <div className="loader__bottom">
           <span className="loader__msg">{count < 40 ? 'Initialising' : count < 80 ? 'Encrypting payload' : 'Access granted'}</span>

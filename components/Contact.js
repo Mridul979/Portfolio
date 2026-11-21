@@ -1,13 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { profile } from '@/data/content';
 import Icon from './Icon';
 import { Chars } from './Split';
+import useYear from './useYear';
 
 export default function Contact() {
   const [toast, setToast] = useState(false);
   const [clock, setClock] = useState('');
+  const toastTimer = useRef(null);
+  const year = useYear();
+
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   useEffect(() => {
     const tick = () => setClock(new Date().toLocaleTimeString('en-IN', {
@@ -22,7 +27,8 @@ export default function Contact() {
     try { await navigator.clipboard.writeText(profile.email); }
     catch { location.href = `mailto:${profile.email}`; return; }
     setToast(true);
-    setTimeout(() => setToast(false), 2200);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(false), 2200);
   };
 
   const toTop = () => {
@@ -66,7 +72,7 @@ export default function Contact() {
         <div className="footer-name stagger" aria-hidden="true" data-repel data-strength="1.6"><Chars text={profile.name} /></div>
 
         <footer className="footer">
-          <span>© {new Date().getFullYear()} {profile.name}. Designed &amp; built with care.</span>
+          <span>© {year} {profile.name}. Designed &amp; built with care.</span>
           <button className="to-top" onClick={toTop}>Back to top ↑</button>
         </footer>
       </div>

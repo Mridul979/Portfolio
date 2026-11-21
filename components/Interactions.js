@@ -58,16 +58,24 @@ export default function Interactions() {
       const target = id === '#top' || id === '#' ? 0 : document.querySelector(id);
       if (target === null) return;
       e.preventDefault();
-      lenis.scrollTo(target, { duration: 1.6, easing: (t) => 1 - Math.pow(1 - t, 4) });
+      lenis.scrollTo(target, { duration: 1.6, easing: (t) => 1 - Math.pow(1 - t, 4), force: true });
     });
     cleanups.push(() => { lenis.destroy(); delete window.__lenis; });
 
     // ---------- Elements driven by the frame loop ----------
     const marquees = $$('.marquee').map((el) => ({
-      el, track: el.querySelector('.marquee__track'), x: 0, dir: -1, skew: 0,
+      el, track: el.querySelector('.marquee__track'), x: 0, dir: -1, skew: 0, period: 0,
     }));
     marquees.forEach((m) => m.el.classList.add('is-js'));
-    const parallax = $$('[data-speed]').map((el) => ({ el, speed: parseFloat(el.dataset.speed) }));
+    // One loop is the distance between the two copies of the first item (this includes the flex gap).
+    const measureMarquees = () => marquees.forEach((m) => {
+      const items = m.track.children;
+      m.period = items[items.length / 2].offsetLeft - items[0].offsetLeft;
+    });
+    measureMarquees();
+    document.fonts?.ready.then(measureMarquees);
+    on(window, 'resize', measureMarquees);
+    const parallax = $$('[data-speed]').map((el) => ({ el, speed: parseFloat(el.dataset.speed), y: 0 }));
     const expanders = $$('[data-expand]');
     const stacks = $$('.exp__list').map((list) => [...list.querySelectorAll('.exp')]);
     const heroTitle = document.querySelector('.hero__title');
@@ -114,34 +122,44 @@ export default function Interactions() {
     let nx = 0, ny = 0;                             // normalised mouse -1..1
     let hovering = false;
     let morphed = false; // cursor is in hover/view state, so skip the stretch
+    let pointerIn = false; // no real mouse position until the first move
 
     on(window, 'mousemove', (e) => {
       mx = e.clientX; my = e.clientY;
       nx = (mx / innerWidth) * 2 - 1; ny = (my / innerHeight) * 2 - 1;
+      if (!pointerIn) {
+        pointerIn = true; cx = mx; cy = my;
+        cursorRef.current?.classList.remove('is-gone');
+      }
       if (dotRef.current) dotRef.current.style.transform = `translate(${mx}px,${my}px) translate(-50%,-50%)`;
     }, { passive: true });
 
     let raf;
+    let lastT = performance.now();
     const frame = (t) => {
       lenis.raf(t);
       const v = lenis.velocity || 0;
       const vh = innerHeight;
+      const dt = clamp((t - lastT) / (1000 / 60), 0, 3); // 1 at 60Hz, so speed is the same on any display
+      lastT = t;
 
       // Marquee: base drift + scroll velocity, flips with scroll direction, skews when fast.
       marquees.forEach((m) => {
         if (v > 0.1) m.dir = -1; else if (v < -0.1) m.dir = 1;
-        const half = m.track.scrollWidth / 2;
-        m.x += m.dir * (hovering && m.el.matches(':hover') ? 0.25 : 1.1 + Math.abs(v) * 0.9);
-        if (m.x <= -half) m.x += half; else if (m.x > 0) m.x -= half;
+        m.x += m.dir * dt * (hovering && m.el.matches(':hover') ? 0.25 : 1.1 + Math.abs(v) * 0.9);
+        if (m.period) { if (m.x <= -m.period) m.x += m.period; else if (m.x > 0) m.x -= m.period; }
         m.skew = lerp(m.skew, clamp(v * -0.6, -10, 10), 0.12);
         m.track.style.transform = `translate3d(${m.x}px,0,0) skewX(${m.skew}deg)`;
       });
 
       // Generic parallax relative to the viewport centre.
-      parallax.forEach(({ el, speed }) => {
-        const r = el.getBoundingClientRect();
-        if (r.bottom < -200 || r.top > vh + 200) return;
-        el.style.translate = `0 ${((r.top + r.height / 2 - vh / 2) * speed).toFixed(1)}px`;
+      // The current offset is removed first so it doesn't feed back into the measurement.
+      parallax.forEach((o) => {
+        const r = o.el.getBoundingClientRect();
+        const top = r.top - o.y;
+        if (top + r.height < -200 || top > vh + 200) return;
+        o.y = (top + r.height / 2 - vh / 2) * o.speed;
+        o.el.style.translate = `0 ${o.y.toFixed(1)}px`;
       });
 
       // Hero title drifts up and fades as you leave the hero.
@@ -178,7 +196,7 @@ export default function Interactions() {
         const active = box.classList.contains('settled');
         chars.forEach((c) => {
           let tx = 0, ty = 0;
-          if (active) {
+          if (active && pointerIn) {
             const R = Math.max(110, c.h * 1.5);
             const dx = br.left + c.ox + c.w / 2 + c.x - mx;
             const dy = br.top + c.oy + c.h / 2 + c.y - my;
@@ -229,8 +247,7 @@ export default function Interactions() {
         cur.classList.remove('is-hover', 'is-view');
         if (t) cur.classList.add(t.hasAttribute('data-view') ? 'is-view' : 'is-hover');
       });
-      on(document, 'mouseleave', () => cur.classList.add('is-gone'));
-      on(document, 'mouseenter', () => cur.classList.remove('is-gone'));
+      on(document.documentElement, 'mouseleave', () => { pointerIn = false; cur.classList.add('is-gone'); });
       on(document, 'mousedown', () => cur.classList.add('is-down'));
       on(document, 'mouseup', () => cur.classList.remove('is-down'));
 
@@ -272,7 +289,7 @@ export default function Interactions() {
   return (
     <>
       <div className="grain" aria-hidden="true" />
-      <div className="cursor" ref={cursorRef} />
+      <div className="cursor is-gone" ref={cursorRef} />
       <div className="cursor-dot" ref={dotRef} />
     </>
   );

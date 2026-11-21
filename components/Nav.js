@@ -17,7 +17,7 @@ export default function Nav() {
     const sections = navLinks.map((l) => document.querySelector(l.href));
     const onScroll = () => {
       const y = scrollY, h = document.documentElement.scrollHeight - innerHeight;
-      if (progressRef.current) progressRef.current.style.width = `${(y / h) * 100}%`;
+      if (progressRef.current) progressRef.current.style.width = `${h > 0 ? Math.min(100, (y / h) * 100) : 0}%`;
       if (!openRef.current) setHidden(y > lastY && y > 300);
       lastY = y;
       let cur = -1;
@@ -25,9 +25,34 @@ export default function Nav() {
       setActive(cur);
     };
     addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll);
     onScroll();
-    return () => removeEventListener('scroll', onScroll);
+    return () => {
+      removeEventListener('scroll', onScroll);
+      removeEventListener('resize', onScroll);
+    };
   }, []);
+
+  // While the mobile menu is open: lock page scroll, close on Escape, and close if the
+  // window grows past the breakpoint where the burger button disappears.
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    const desktop = matchMedia('(min-width: 861px)');
+    const close = () => setOpen(false);
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    const onChange = (e) => { if (e.matches) close(); };
+    root.classList.add('menu-lock');
+    window.__lenis?.stop();
+    addEventListener('keydown', onKey);
+    desktop.addEventListener('change', onChange);
+    return () => {
+      root.classList.remove('menu-lock');
+      window.__lenis?.start();
+      removeEventListener('keydown', onKey);
+      desktop.removeEventListener('change', onChange);
+    };
+  }, [open]);
 
   return (
     <div className={open ? 'menu-open' : ''}>
@@ -46,7 +71,7 @@ export default function Nav() {
       </header>
       <nav className="mobile-menu" aria-label="Mobile" aria-hidden={!open}>
         {[...navLinks.filter((l) => l.href !== '#certifications'), { href: '#contact', label: 'Contact' }].map((l, i) => (
-          <a key={l.href} href={l.href} style={{ '--i': i }} tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}><span>{l.label}</span></a>
+          <a key={l.href} href={l.href} style={{ '--i': i }} tabIndex={open ? 0 : -1} onClick={() => { window.__lenis?.start(); setOpen(false); }}><span>{l.label}</span></a>
         ))}
         <small>{profile.location}</small>
       </nav>

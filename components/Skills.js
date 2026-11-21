@@ -21,7 +21,7 @@ export default function Skills() {
             <span className="eyebrow reveal">Toolkit</span>
             <SplitLines className="h2" style={{ marginTop: 20 }} lines={['Skills &', { em: 'technologies' }]} />
           </div>
-          <p className="reveal">The languages, tools and platforms I use to break, build and ship things. Hover a card to flip it.</p>
+          <p className="reveal">The languages, tools and platforms I use to break, build and ship things. Hover or tap a card to flip it.</p>
         </div>
         <div className="skills__grid">
           {skills.map((s, i) => (

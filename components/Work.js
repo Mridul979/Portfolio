@@ -8,13 +8,20 @@ import { SplitLines } from './Split';
 
 export default function Work() {
   const [openIndex, setOpenIndex] = useState(0);
-  const [preview, setPreview] = useState(null); // index of project shown in the floating preview
+  const [preview, setPreview] = useState(0); // index of project in the floating preview
+  const [showPreview, setShowPreview] = useState(false); // kept separate so it can fade out with its image
   const fpRef = useRef(null);
   const pos = useRef({ fx: 0, fy: 0, tx: 0, ty: 0 });
 
+  // Keeps the 320×200 preview inside the viewport.
+  const aim = (x, y) => {
+    pos.current.tx = Math.max(176, Math.min(innerWidth - 176, x + 60));
+    pos.current.ty = Math.max(116, Math.min(innerHeight - 116, y));
+  };
+
   // Smoothly move the floating preview toward the cursor
   useEffect(() => {
-    if (preview === null) return;
+    if (!showPreview) return;
     let raf;
     const follow = () => {
       const p = pos.current;
@@ -28,7 +35,7 @@ export default function Work() {
     };
     follow();
     return () => cancelAnimationFrame(raf);
-  }, [preview]);
+  }, [showPreview]);
 
   const canPreview = () =>
     matchMedia('(pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -53,14 +60,16 @@ export default function Work() {
                   className="project__head"
                   aria-expanded={open}
                   data-view
-                  onClick={() => { setOpenIndex(open ? -1 : i); setPreview(null); }}
+                  onClick={() => { setOpenIndex(open ? -1 : i); setShowPreview(false); }}
                   onMouseEnter={(e) => {
                     if (open || !canPreview()) return;
-                    Object.assign(pos.current, { fx: e.clientX, fy: e.clientY, tx: e.clientX, ty: e.clientY });
+                    aim(e.clientX, e.clientY);
+                    Object.assign(pos.current, { fx: pos.current.tx, fy: pos.current.ty });
                     setPreview(i);
+                    setShowPreview(true);
                   }}
-                  onMouseMove={(e) => { pos.current.tx = e.clientX + 60; pos.current.ty = e.clientY; }}
-                  onMouseLeave={() => setPreview(null)}
+                  onMouseMove={(e) => aim(e.clientX, e.clientY)}
+                  onMouseLeave={() => setShowPreview(false)}
                 >
                   <span className="project__no">{p.no}</span>
                   <span className="project__title">{p.title}</span>
@@ -86,8 +95,9 @@ export default function Work() {
 
       <div
         ref={fpRef}
-        className={`float-preview${preview !== null ? ' show' : ''}`}
-        dangerouslySetInnerHTML={{ __html: preview !== null ? visuals[projects[preview].visual] : '' }}
+        className={`float-preview${showPreview ? ' show' : ''}`}
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: visuals[projects[preview].visual] }}
       />
     </section>
   );
