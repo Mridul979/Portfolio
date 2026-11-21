@@ -26,7 +26,8 @@ export default function Skills() {
         <div className="skills__grid">
           {skills.map((s, i) => (
             <div
-              className={`skill-card reveal${flipped === i ? ' flipped' : ''}`}
+              className="skill-card reveal"
+              data-flipped={flipped === i}
               key={s.title}
               tabIndex={0}
               role="button"

@@ -198,10 +198,10 @@ section{position:relative}
 .project__tag{font-size:14px;font-weight:600;opacity:.6;text-align:right}
 .project__toggle{width:52px;height:52px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);display:grid;place-items:center;transition:background .4s,transform .5s var(--ease),border-color .4s}
 .project__toggle svg{transition:transform .5s var(--ease)}
-.project.open .project__toggle{background:var(--accent);border-color:var(--accent);color:var(--ink)}
-.project.open .project__toggle svg{transform:rotate(45deg)}
+.project[data-open="true"] .project__toggle{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+.project[data-open="true"] .project__toggle svg{transform:rotate(45deg)}
 .project__body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .6s var(--ease)}
-.project.open .project__body{grid-template-rows:1fr}
+.project[data-open="true"] .project__body{grid-template-rows:1fr}
 .project__inner{overflow:hidden}
 .project__content{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);padding:0 0 40px 90px}
 .project__visual{border-radius:22px;aspect-ratio:16/10;position:relative;overflow:hidden}
@@ -238,8 +238,8 @@ section{position:relative}
 .skill-face--back .chip{background:var(--ink);border-color:var(--ink);color:#fff;font-size:14px;padding:8px 14px;opacity:0;transform:translateY(14px) scale(.85);transition:opacity .15s,transform .15s}
 .skill-face--back .chip:hover{background:#fff;color:var(--ink)}
 /* flip triggers: hover (mouse), tap or Enter/Space (.flipped) */
-.skill-card.flipped .skill-card__inner{transform:rotateY(180deg)}
-.skill-card.flipped .chip{opacity:1;transform:none;transition:opacity .5s var(--ease),transform .6s cubic-bezier(.34,1.5,.5,1),background .3s,color .3s;transition-delay:calc(var(--i) * 55ms + .35s),calc(var(--i) * 55ms + .35s),0s,0s}
+.skill-card[data-flipped="true"] .skill-card__inner{transform:rotateY(180deg)}
+.skill-card[data-flipped="true"] .chip{opacity:1;transform:none;transition:opacity .5s var(--ease),transform .6s cubic-bezier(.34,1.5,.5,1),background .3s,color .3s;transition-delay:calc(var(--i) * 55ms + .35s),calc(var(--i) * 55ms + .35s),0s,0s}
 @media (hover:hover){
   .skill-card:hover .skill-card__inner{transform:rotateY(180deg)}
   .skill-card:hover .chip{opacity:1;transform:none;transition:opacity .5s var(--ease),transform .6s cubic-bezier(.34,1.5,.5,1),background .3s,color .3s;transition-delay:calc(var(--i) * 55ms + .35s),calc(var(--i) * 55ms + .35s),0s,0s}
@@ -341,9 +341,9 @@ a:hover .roll::after,button:hover .roll::after{transform:translateY(-100%)}
 .project__head:hover::before{transform:scaleY(1);transform-origin:top}
 .project__head:hover .project__toggle{transform:rotate(90deg);border-color:var(--accent)}
 .project__visual{transform:scale(.92) translateY(20px);opacity:0;transition:transform .9s var(--ease) .1s,opacity .6s .1s}
-.project.open .project__visual{transform:none;opacity:1}
+.project[data-open="true"] .project__visual{transform:none;opacity:1}
 .project li,.project .chip{opacity:0;transform:translateY(16px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
-.project.open li,.project.open .chip{opacity:1;transform:none;transition-delay:calc(var(--i) * 60ms + .2s)}
+.project[data-open="true"] li,.project[data-open="true"] .chip{opacity:1;transform:none;transition-delay:calc(var(--i) * 60ms + .2s)}
 .float-preview{box-shadow:0 40px 80px -30px rgba(0,0,0,.6)}
 
 /* Skills */

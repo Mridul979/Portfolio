@@ -55,7 +55,9 @@ export default function Work() {
           {projects.map((p, i) => {
             const open = openIndex === i;
             return (
-              <article className={`project reveal${open ? ' open' : ''}`} key={p.no}>
+              // Open state is a data attribute: changing className would wipe the `in` class
+              // that the scroll observer adds, leaving the row invisible.
+              <article className="project reveal" data-open={open} key={p.no}>
                 <button
                   className="project__head"
                   aria-expanded={open}
